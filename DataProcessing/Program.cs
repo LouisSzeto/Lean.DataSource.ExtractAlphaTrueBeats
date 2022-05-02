@@ -18,31 +18,44 @@ using System;
 using System.Globalization;
 using System.IO;
 using QuantConnect.Configuration;
+using QuantConnect.ToolBox;
 
 namespace QuantConnect.DataProcessing
 {
     public class Program
     {
-        public static void Main()
+        public static void Main(string[] args)
         {
+            var optionsObject = ToolboxArgumentParser.ParseArguments(args);
+            var universeOnly = optionsObject.ContainsKey("universe")
+                ? Convert.ToBoolean(optionsObject["universe"].ToString())
+                : false;
+
             // Use environment variable vs. config value, because the bash synchronization script
             // uses this environment variable to download historical data if requested.
-            var processHistoricalData = Environment.GetEnvironmentVariable("PROCESS_HISTORICAL_DATA")?
-                .ToLowerInvariant()
-                .Trim() == "true";
-            
-            var deploymentDateValue = Environment.GetEnvironmentVariable("QC_DATAFLEET_DEPLOYMENT_DATE");
-            var deploymentDate = Parse.DateTimeExact(deploymentDateValue, "yyyyMMdd", DateTimeStyles.None);
-
-            var rawDataDirectory = new DirectoryInfo(Config.Get("raw-data-directory", Directory.GetCurrentDirectory()));
-            var existingDataDirectory = new DirectoryInfo(Config.Get("processed-data-directory", Globals.DataFolder));
             var outputDataDirectory = Directory.CreateDirectory(Config.Get("temp-output-directory", "/temp-output-directory"));
 
-            var converter = processHistoricalData 
-                ? new ExtractAlphaTrueBeatsHistoricalConverter(rawDataDirectory, existingDataDirectory, outputDataDirectory)
-                : new ExtractAlphaTrueBeatsConverter(deploymentDate, rawDataDirectory, existingDataDirectory, outputDataDirectory);
-            
-            converter.Convert();
+            if (!universeOnly)
+            {
+                var processHistoricalData = Environment.GetEnvironmentVariable("PROCESS_HISTORICAL_DATA")?
+                    .ToLowerInvariant()
+                    .Trim() == "true";
+
+                var deploymentDateValue = Environment.GetEnvironmentVariable("QC_DATAFLEET_DEPLOYMENT_DATE");
+                var deploymentDate = Parse.DateTimeExact(deploymentDateValue, "yyyyMMdd", DateTimeStyles.None);
+
+                var rawDataDirectory = new DirectoryInfo(Config.Get("raw-data-directory", Directory.GetCurrentDirectory()));
+                var existingDataDirectory = new DirectoryInfo(Config.Get("processed-data-directory", Globals.DataFolder));
+                var converter = processHistoricalData 
+                    ? new ExtractAlphaTrueBeatsHistoricalConverter(rawDataDirectory, existingDataDirectory, outputDataDirectory)
+                    : new ExtractAlphaTrueBeatsConverter(deploymentDate, rawDataDirectory, existingDataDirectory, outputDataDirectory);
+
+                converter.Convert();
+            }
+
+            // Universe files generation
+            var universeConverter = new ExtractAlphaTrueBeatUniverseConverter(outputDataDirectory.ToString());
+            universeConverter.Run();
         }
     }
 }

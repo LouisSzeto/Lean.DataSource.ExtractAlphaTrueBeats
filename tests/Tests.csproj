@@ -4,6 +4,12 @@
     <RootNamespace>QuantConnect.DataLibrary.Tests</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\ExtractAlphaTrueBeatsAlgorithm.cs" />
+    <Compile Include="..\ExtractAlphaTrueBeatUniverseSelectionAlgorithm.cs" />
+    <None Include="..\ExtractAlphaTrueBeatsAlgorithm.py" />
+    <None Include="..\ExtractAlphaTrueBeatUniverseSelectionAlgorithm.py" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="protobuf-net" Version="3.0.29" />
     <PackageReference Include="protobuf-net.Core" Version="3.0.29" />
     <PackageReference Include="NUnit" Version="3.13.1" />
